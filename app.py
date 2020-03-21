@@ -111,6 +111,12 @@ def plot_data(df, area):
 	# Combine 2 series into dataframe
 	# df = pd.concat([s1, s2], axis=1)
 
+	# get the current date
+	date = df.index[-1]
+	
+	# replace date slashes with dashes
+	date = date.replace('/', '-')
+
 	# change index to datetime
 	df.index = pd.to_datetime(df.index, infer_datetime_format=True) #format='%m/%-d/%y')
 	print(df)
@@ -150,12 +156,17 @@ def plot_data(df, area):
 	ax.set_xticklabels(np.arange(0, 141, 7))
 
 	# label chart
-	plt.title('COVID-19 in ' + area)
+	plt.title('2019 nCoV in ' + area + ' as of ' + date)
 	plt.xlabel('Days')
 	plt.ylabel('Counts of Cases and Deaths')
 	
 	# change to appropriate directory to save chart
 	os.chdir('./charts')
+
+	if not os.path.exists('./' + date):
+		os.mkdir(date)
+	
+	os.chdir('./' + date)
 	
 	# save chart
 	plt.savefig(area + '.png')
