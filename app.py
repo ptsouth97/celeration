@@ -15,21 +15,35 @@ def main():
 	region = 'Italy'
 
 	# define data type  (Confirmed, Deaths, Recovered)
-	which_data = 'Confirmed'
+	data_types = ['Confirmed', 'Deaths']
 
-	# load data
-	confirmed = load_data(which_data)
+	# initialize blank DataFrame
+	df = pd.DataFrame()
 
-	# slice data
-	region_df = get_data(confirmed, region)
-	# print(country_df)
+	for data in data_types:
+
+		# load data
+		confirmed = load_data(data)
 	
-	# count data
-	count = count_data(region_df)
-	#print(count)
+		# slice regional data only
+		region_df = get_data(confirmed, region)
+	
+		# sum cumulative values for each day
+		cumulative = count_data(region_df)
+
+		# calculate daily counts
+		daily = calc_daily_count(cumulative)
+
+		# combine 2 series
+		addition = pd.concat([cumulative, daily], axis=1)
+
+		# add to dataframe
+		df = pd.concat([df, addition], axis=1)
+
+	df.columns=(['Cumulative cases', 'Daily cases', 'Cumulative deaths', 'Daily deaths'])
 
 	# plot data
-	plot_data(count, region, which_data)
+	plot_data(df, region)
 
 
 def load_data(data):
@@ -51,7 +65,7 @@ def load_data(data):
 
 
 def get_data(df, place):
-	''' returns df with us cases only'''
+	''' returns df with selected regional cases only'''
 
 	is_place = df['Country/Region'] == place	
 	df = df[is_place]
@@ -62,18 +76,28 @@ def get_data(df, place):
 
 
 def count_data(df):
-	''' counts new cases each day'''
+	''' counts cumulative cases each day'''
 
 	#df['delta'] = df['3/18/20'] - df['3/17/20']
 	#daily = df['delta'].sum()
 	#print('The US daily new cases is {}'.format(str(daily)))
 
 	sums = df.apply(np.sum, axis=0)
+	sums.columns = ['Cumulative']
 	
 	return sums
 
 
-def plot_data(df, area, data):
+def calc_daily_count(df):
+	''' calculates the daily count from the cumulative count'''
+
+	df = df.diff()
+	df.columns = ['Daily']
+
+	return df
+
+
+def plot_data(df, area):
 	''' plots data'''
 
 	#is_sc = df['Province/State']=='South Carolina'
@@ -84,14 +108,19 @@ def plot_data(df, area, data):
 	#print(df.iloc[0])
 	#df.set_index(df.iloc[0], inplace=True)
 
+	# Combine 2 series into dataframe
+	# df = pd.concat([s1, s2], axis=1)
+
 	# change index to datetime
 	df.index = pd.to_datetime(df.index, infer_datetime_format=True) #format='%m/%-d/%y')
+	print(df)
 
+	
 	# change series back to df
-	df = pd.DataFrame(df)
+	#df = pd.DataFrame(df)
 
 	# assign column name
-	df.columns = [area]
+	#df.columns = ['Cumulative', 'Daily']
 
 	# plot df
 	ax = df.plot(marker='o', markersize=3, linewidth=1, logy=True, legend=True)
@@ -123,10 +152,20 @@ def plot_data(df, area, data):
 	# label chart
 	plt.title('COVID-19 in ' + area)
 	plt.xlabel('Days')
-	plt.ylabel(data + ' Cases')
+	plt.ylabel('Counts of Cases and Deaths')
 	
-	plt.savefig('test.png')
+	# change to appropriate directory to save chart
+	os.chdir('./charts')
+	
+	# save chart
+	plt.savefig(area + '.png')
+	
+	# change back to original working directory
+	os.chdir('..')
+
+	# display the chart
 	plt.show()
+	
 
 	return df
 
