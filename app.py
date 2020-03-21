@@ -2,7 +2,7 @@
 
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib.ticker import (AutoMinorLocator, MultipleLocator)
+from matplotlib.ticker import MultipleLocator, ScalarFormatter
 import numpy as np
 import datetime
 import os
@@ -94,41 +94,31 @@ def plot_data(df, area, data):
 	df.columns = [area]
 
 	# plot df
-	ax = df.plot(marker='o', \
-			logy=True, \
-			legend=True, \
-			use_index=True, \
-			ylim=(0, 1000000))
+	ax = df.plot(marker='o', markersize=3, linewidth=1, logy=True, legend=True)
 
+	# set the range for the y axis
+	ax.set_ylim([1, 1000000])
 
-	# change major and minor gridline locations
-	#major_ticks = np.arange(0, 141, 20)
-	#ax.set_xticks(major_ticks)
-	#ax.grid(True, which='major', alpha=0.5)
-
-	#minor_ticks = np.arange(0, 141, 140)
-	#ax.set_xticks(minor_ticks, minor=True)
-	#ax.grid(True, which='minor', alpha=0.2)
-
-	#ax.grid(which='both')
-
-	# draw gridlines on the y axis
+	# turn on major and minor grid lines for y axis 
 	ax.yaxis.grid(True, which='minor', linestyle='-', alpha=0.5)
 	ax.yaxis.grid(True, which='major', linestyle='-', alpha=0.8)
 	
-	#ax.xaxis.grid(True, which='minor', linestyle='-')
-			
 	# move x-axis labels to the top
 	# ax.xaxis.set_ticks_position('top')
 
-	# draw gridlines on the x axis
+	# set the range for the x axis
 	ax.set_xlim([datetime.date(2019, 12,29), datetime.date(2020, 5, 17)])
 
+	# set the location for the x axis ticks
 	ax.xaxis.set_minor_locator(MultipleLocator(1))
 	ax.xaxis.set_major_locator(MultipleLocator(7))
 
+	# turn on the major and minor grid lines for x axis
 	ax.xaxis.grid(True, which='minor', linestyle='-', alpha=0.5)
 	ax.xaxis.grid(True, which='major', linestyle='-', alpha=0.8)
+
+	# set x labels
+	ax.set_xticklabels(np.arange(0, 141, 7))
 
 	# label chart
 	plt.title('COVID-19 in ' + area)
