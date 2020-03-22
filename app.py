@@ -207,17 +207,21 @@ def plot_data(df, area):
 	# Add predictions to dataframe
 	df = pd.concat([df, Y_pred], axis=1)
 
-	#ax = plt.plot(df['Daily cases'])
+	# Build plot
+	fig = plt.figure()
+	fig.set_size_inches(11, 8.5)
+
 	ax = df['Cumulative cases'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
 	ax = df['Daily cases'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
 	#ax = df['Cumulative deaths'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
 	#ax = df['Daily deaths'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
 	ax = df['celeration curve'].plot(kind='line', marker=None, linewidth=1, logy=True, legend=True) #, color='k')	
 
-	# add text for celeration value
-	ax.text(0.5, 0.5, 'Celeration = x'+ str(celeration) +' per week', horizontalalignment='center', verticalalignment='center')
+	# Add any necessary vertical lines
+	#plt.axvline(x=datetime.datetime(2020, 3, 17), color='yellow', linewidth=1)
+	#plt.axhline(y=1000, color='red', linewidth=1, linestyle='--')	
 
-	# set the range for the y axis
+	# Set the range for the y axis
 	ax.set_ylim([1, 1000000])
 
 	# turn on major and minor grid lines for y axis 
@@ -238,8 +242,17 @@ def plot_data(df, area):
 	# set x labels
 	ax.set_xticklabels(np.arange(0, 141, 7))
 
+	# Create text box
+	fig.text(0.8, 0.2, 'Celeration = x{:.1f} per week'.format(celeration), \
+			horizontalalignment='center', \
+			verticalalignment='center', \
+			bbox=dict(facecolor='white', alpha=1.0))
+
+	fig.text(0.025, 0.025, 'Source: Johns Hopkins', bbox=dict(facecolor='white', alpha=1.0))
+	fig.text(0.12, 0.96, '29-Dec-2019', rotation=45)
+
 	# label chart
-	plt.title('2019 nCoV in {} as of {}, Celeration = x{:.1f} per week'.format(area, date, celeration))
+	plt.title('2019 nCoV in {} as of {}'.format(area, date))
 	plt.xlabel('Days')
 	plt.ylabel('Counts of Cases and Deaths')
 	
