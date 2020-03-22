@@ -14,7 +14,8 @@ def main():
 	''' main function'''
 
 	# define region
-	countries = ['Singapore']
+	countries = ['US']
+	state = 'South Carolina'
 
 	# get a list of the countries
 	'''countries = load_data('Confirmed')
@@ -34,28 +35,38 @@ def main():
 
 		for data in data_types:
 
-			# load data
+			# Load data
 			confirmed = load_data(data)
 	
-			# slice regional data only
-			region_df = get_data(confirmed, country)
-	
-			# sum cumulative values for each day
+			# Slice regional data only
+			region_df = get_data(confirmed, country)	
+
+			if state != None:
+
+				# Get state data
+				region_df = state_data(region_df, state)
+
+			else:
+				# Drop unnecessary columns
+				region_df.drop(['Province/State', 'Country/Region', 'Lat', 'Long'], axis=1, inplace=True)
+			
+			# Sum cumulative values for each day
 			cumulative = count_data(region_df)
 
-			# calculate daily counts
+			# Calculate daily counts
 			daily = calc_daily_count(cumulative)
 
-			# combine 2 series
+			# Combine 2 series
 			addition = pd.concat([cumulative, daily], axis=1)
 
-			# add to dataframe
+			# Add to dataframe
 			df = pd.concat([df, addition], axis=1)
 
 		df.columns=(['Cumulative cases', 'Daily cases', 'Cumulative deaths', 'Daily deaths'])
+	
 
-		# plot data
-		plot_data(df, country)
+		# Plot data
+		plot_data(df, country, state)
 
 
 def load_data(data):
@@ -82,7 +93,6 @@ def get_data(df, place):
 	is_place = df['Country/Region'] == place	
 	df = df[is_place]
 	df.reset_index(drop=True, inplace=True)
-	df.drop(['Province/State', 'Country/Region', 'Lat', 'Long'], axis=1, inplace=True)
 
 	return df
 
@@ -173,21 +183,19 @@ def regression(df):
 	return predictions, celeration
 
 
-def state_data(df, area):
+def state_data(df, state):
 	''' plots data'''
 
-	is_sc = df['Province/State']=='South Carolina'
-	df = df[is_sc]
+	is_state = df['Province/State'] == state
+	df = df[is_state]
+	
 	df.reset_index(drop=True, inplace=True)
-	df.drop(['Province/State', 'Country/Region'], axis=1, inplace=True)
-	df = df.T
-	print(df.iloc[0])
-	df.set_index(df.iloc[0], inplace=True)
+	df.drop(['Country/Region', 'Province/State', 'Lat', 'Long'], axis=1, inplace=True)
 
-	return
+	return df
 
 
-def plot_data(df, area):
+def plot_data(df, area, state):
 	''' plots data'''
 
 	# get the current date
@@ -213,8 +221,8 @@ def plot_data(df, area):
 
 	ax = df['Cumulative cases'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
 	ax = df['Daily cases'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
-	#ax = df['Cumulative deaths'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
-	#ax = df['Daily deaths'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
+	ax = df['Cumulative deaths'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
+	ax = df['Daily deaths'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
 	ax = df['celeration curve'].plot(kind='line', marker=None, linewidth=1, logy=True, legend=True) #, color='k')	
 
 	# Add any necessary vertical lines
@@ -243,16 +251,23 @@ def plot_data(df, area):
 	ax.set_xticklabels(np.arange(0, 141, 7))
 
 	# Create text box
-	fig.text(0.8, 0.2, 'Celeration = x{:.1f} per week'.format(celeration), \
-			horizontalalignment='center', \
+	fig.text(0.6, 0.03, 'Celeration = x{:.1f} per week (not counting data points before cumulative cases reached 30)'.format(celeration),\
+			horizontalalignment='left', \
 			verticalalignment='center', \
-			bbox=dict(facecolor='white', alpha=1.0))
+			bbox=dict(facecolor='white', alpha=1.0), \
+			wrap=True)
 
 	fig.text(0.025, 0.025, 'Source: Johns Hopkins', bbox=dict(facecolor='white', alpha=1.0))
 	fig.text(0.12, 0.96, '29-Dec-2019', rotation=45)
 
 	# label chart
-	plt.title('2019 nCoV in {} as of {}'.format(area, date))
+
+	if state == None:
+		plt.title('2019 nCoV in {} as of {}'.format(area, date))
+
+	else:
+		plt.title('2019 nCoV in {} as of {}'.format(state, date))
+
 	plt.xlabel('Days')
 	plt.ylabel('Counts of Cases and Deaths')
 	
@@ -265,7 +280,11 @@ def plot_data(df, area):
 	os.chdir('./' + date)
 	
 	# save chart
-	plt.savefig(area + '.png')
+	if state == None:
+		plt.savefig(area + '.png')
+
+	else:
+		plt.savefig(state + '.png')
 	
 	# change back to original working directory
 	os.chdir('../..')
