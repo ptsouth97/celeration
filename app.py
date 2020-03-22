@@ -7,13 +7,14 @@ import numpy as np
 import datetime
 import os
 from sklearn.linear_model import LinearRegression
+import math
 
 
 def main():
 	''' main function'''
 
 	# define region
-	countries = ['Italy']
+	countries = ['Singapore']
 
 	# get a list of the countries
 	'''countries = load_data('Confirmed')
@@ -89,10 +90,6 @@ def get_data(df, place):
 def count_data(df):
 	''' counts cumulative cases each day'''
 
-	#df['delta'] = df['3/18/20'] - df['3/17/20']
-	#daily = df['delta'].sum()
-	#print('The US daily new cases is {}'.format(str(daily)))
-
 	sums = df.apply(np.sum, axis=0)
 	sums.columns = ['Cumulative']
 	
@@ -111,21 +108,69 @@ def calc_daily_count(df):
 def regression(df):
 	''' performs curve fit'''
 
-	df = df.replace(to_replace=0, value=1)
-	start_date = df.index[0]
+	# filter out row where cumulative cases is greater than 30
+	greater_30 = df['Cumulative cases']>30
+	df = df[greater_30]
 	
+	# replace 0's in data frame with 1's to prevent errors
+	df = df.replace(to_replace=0, value=1)
+
+	# find number of days between end of chart and start date
+	start = df.index[0]
+	end = datetime.datetime(2020, 5, 17)
+	days = (end - start).days
+	shift = 140 - days
+
+	# Create X and Y prediction spaces
 	num = len(df)
 	X = np.arange(1, num+1).reshape(-1, 1)
-	Y = df.iloc[:, 1].values.reshape(-1, 1)
+	Y = df['Daily cases'].values.reshape(-1, 1)
 	
+	# Perform regression	
 	linear_regressor = LinearRegression()
 	linear_regressor.fit(X, np.log(Y))
-	Y_pred = linear_regressor.predict(X)
 
-	predictions = pd.DataFrame(Y_pred, index=df.index)
-	predictions = predictions.apply(np.exp, axis=0)
+	# Get linear regression parameters
+	m = linear_regressor.coef_
+	b = linear_regressor.intercept_
 
-	return predictions
+	# Initialize and fill data frame for regression results
+	values = []
+	
+	for value in range(1, 140): #days+1):   # changed 'begin' from '1'
+		values.append(math.exp(m*(value-shift) + b))
+
+	# Create a date frame the size of the celeration chart and fill it with the calculated values
+	predictions = pd.DataFrame(index=[np.arange(1, 140)], data=values)
+
+	# Create a data frame to join with the predictions that matches the size of the celeration chart
+	total_days = 140
+	early_days = 140 - days
+	early_predictions = pd.DataFrame(np.zeros((early_days, 1)))
+
+	predictions = predictions.append(early_predictions)
+	predictions.reset_index(inplace=True)
+	predictions.drop(['index'], axis=1, inplace=True)
+
+
+	# Convert index back to dates
+	dates = predictions.index.values
+	dates = dates.tolist()
+	
+	dates = [ datetime.datetime(2019, 12, 29) + datetime.timedelta(days=date) for date in dates ]
+
+	predictions['dates'] = dates
+	predictions.set_index('dates', inplace=True)
+	predictions = predictions.rename(columns={0: 'celeration curve'})
+	predictions.replace(to_replace=0, value=np.nan, inplace=True)
+	
+
+	# Calculate the celeration value
+	week1 = float(predictions.iloc[78])
+	week0 = float(predictions.iloc[71])
+	celeration = week1 / week0
+	
+	return predictions, celeration
 
 
 def state_data(df, area):
@@ -157,20 +202,21 @@ def plot_data(df, area):
 	# change index to datetime
 	df.index = pd.to_datetime(df.index, infer_datetime_format=True) #format='%m/%-d/%y')
 	
-	Y_pred = regression(df)
+	Y_pred, celeration = regression(df)
 
 	# Add predictions to dataframe
 	df = pd.concat([df, Y_pred], axis=1)
-	df = df.rename(columns={0: 'model'})
-	print(df)	
 
 	#ax = plt.plot(df['Daily cases'])
 	ax = df['Cumulative cases'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
 	ax = df['Daily cases'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
-	ax = df['Cumulative deaths'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
-	ax = df['Daily deaths'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
-	ax = df['model'].plot(kind='line', marker=None, linewidth=1, logy=True, legend=True)
-	
+	#ax = df['Cumulative deaths'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
+	#ax = df['Daily deaths'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
+	ax = df['celeration curve'].plot(kind='line', marker=None, linewidth=1, logy=True, legend=True) #, color='k')	
+
+	# add text for celeration value
+	ax.text(0.5, 0.5, 'Celeration = x'+ str(celeration) +' per week', horizontalalignment='center', verticalalignment='center')
+
 	# set the range for the y axis
 	ax.set_ylim([1, 1000000])
 
@@ -193,7 +239,7 @@ def plot_data(df, area):
 	ax.set_xticklabels(np.arange(0, 141, 7))
 
 	# label chart
-	plt.title('2019 nCoV in ' + area + ' as of ' + date)
+	plt.title('2019 nCoV in {} as of {}, Celeration = x{:.1f} per week'.format(area, date, celeration))
 	plt.xlabel('Days')
 	plt.ylabel('Counts of Cases and Deaths')
 	
