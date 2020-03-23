@@ -13,25 +13,42 @@ import math
 def main():
 	''' main function'''
 
-	# define region
-	#countries = ['US', 'Iran', 'Italy', 'Spain']
-	#countries = ['US', 'Russia']
+	# select mode -- 'solo' or 'comparison'
+	mode = 'solo'
+
+	# define region of interest -- 'state', 'country', or 'all countries'
+	region = 'all countries'
+
 	state = None
-		
-	# get a list of the countries
-	countries = load_data('Confirmed')
-	countries = countries['Country/Region']
-	countries = countries.drop_duplicates()
-	countries = countries.tolist()
+
+	if region == 'all countries':		
+		# get a list of the all the countries
+		countries = load_data('Confirmed')
+		countries = countries['Country/Region']
+		countries = countries.drop_duplicates()
+		countries = countries.tolist()
+
+	elif region == 'state':
+		countries = 'US'
+		state = 'South Carolina'
+
+	elif region == 'country':
+		countries = ['Iran']
 	
 	results = pd.DataFrame()	
-	celerations = pd.DataFrame()
+
+	# Track celeration?
+	track_celeration = 'Yes'
+
+	if track_celeration == 'Yes':
+		celerations = pd.DataFrame()
 
 
 	for country in countries:
 
 		print('NOW PROCESSING {}...'.format(country))
 		print('')
+
 		# define data type  (Confirmed, Deaths, Recovered)
 		data_types = ['Confirmed', 'Deaths']
 
@@ -70,10 +87,11 @@ def main():
 		df.columns=(['Cumulative cases', 'Daily cases', 'Cumulative deaths', 'Daily deaths'])
 		
 		# Check if data frame is empty and skip to next country if true
-		#print(df)
+		
 		check = df.empty
 		print(check)
 		print('')
+
 		if check == True:
 			continue
 
@@ -84,22 +102,29 @@ def main():
 		if  celeration == 'no_celeration':
 			continue
 
-		# Update celeration results
-		new_line = pd.Series([country, celeration])
+		# Decide whether to update celeration results
+		if track_celeration == 'Yes':
 
-		#celerations = celerations.append(pd.DataFrame(new_line), axis=0, ignore_index=True)	
-		celerations = celerations.append(new_line, ignore_index=True)
+			# Update celeration results
+			new_line = pd.Series([country, celeration])
 
-		# Build dataset by looping over several regions before plotting
-		#results = pd.concat([results, df[country + ' Daily cases']], axis=1)
+			#celerations = celerations.append(pd.DataFrame(new_line), axis=0, ignore_index=True)	
+			celerations = celerations.append(new_line, ignore_index=True)
+
+		if mode == 'Comparison':
+			# Build dataset by looping over several regions before plotting
+			results = pd.concat([results, df[country + ' Daily cases']], axis=1)
 
 		# Plot data
 		plot_data(df, country, state, celeration, date)
 		
 
+	os.chdir('./charts/' + date)
 
-	print(celerations)
-	celerations.to_csv('celerations.csv')
+	if track_celeration == 'Yes':
+		print(celerations)
+		celerations.to_csv(date+'-celerations.csv', index=False)
+
 	print('Good bye!')
 
 	return
@@ -305,7 +330,7 @@ def plot_data(df, area, state, celeration, date):
 			bbox=dict(facecolor='white', alpha=1.0), \
 			wrap=True)
 	
-	fig.text(0.025, 0.025, 'Source: Johns Hopkins', bbox=dict(facecolor='white', alpha=1.0))
+	fig.text(0.025, 0.025, 'Source: Johns Hopkins, https://github.com/CSSEGISandData', bbox=dict(facecolor='white', alpha=1.0))
 	fig.text(0.12, 0.96, '29-Dec-2019', rotation=45)
 
 	# label chart
@@ -332,7 +357,7 @@ def plot_data(df, area, state, celeration, date):
 		plt.savefig(date+'-'+area+'.png')
 
 	else:
-		plt.savefig(state + '.png')
+		plt.savefig(date+'-'+state + '.png')
 	
 	# change back to original working directory
 	os.chdir('../..')
