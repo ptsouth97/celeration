@@ -14,15 +14,20 @@ def main():
 	''' main function'''
 
 	# define region
-	countries = ['US']
-	state = 'South Carolina'
-
+	#countries = ['US', 'Iran', 'Italy', 'Spain']
+	#countries = ['US', 'Russia']
+	state = None
+	
 	# get a list of the countries
-	'''countries = load_data('Confirmed')
+	countries = load_data('Confirmed')
 	countries = countries['Country/Region']
 	countries = countries.drop_duplicates()
-	countries = countries.tolist()'''
+	countries = countries.tolist()
 	
+	results = pd.DataFrame()	
+	celerations = pd.DataFrame()
+
+
 	for country in countries:
 
 		print('Now processing {}...'.format(country))
@@ -63,10 +68,29 @@ def main():
 			df = pd.concat([df, addition], axis=1)
 
 		df.columns=(['Cumulative cases', 'Daily cases', 'Cumulative deaths', 'Daily deaths'])
-	
+		
+		# Regression
+		df, celeration,date = regression(df)
+		
+		# Update celeration results
+		new_line = pd.Series([country, celeration])
+
+		#celerations = celerations.append(pd.DataFrame(new_line), axis=0, ignore_index=True)	
+		celerations = celerations.append(new_line, ignore_index=True)
+
+		# Build dataset by looping over several regions before plotting
+		#results = pd.concat([results, df[country + ' Daily cases']], axis=1)
 
 		# Plot data
-		plot_data(df, country, state)
+		plot_data(df, country, state, celeration, date)
+		
+
+
+	print(celerations)
+	celerations.to_csv('celerations.csv')
+	print('Good bye!')
+
+	return
 
 
 def load_data(data):
@@ -115,15 +139,35 @@ def calc_daily_count(df):
 	return df
 
 
-def regression(df):
+def regression(original_df):
 	''' performs curve fit'''
 
-	# filter out row where cumulative cases is greater than 30
-	greater_30 = df['Cumulative cases']>30
-	df = df[greater_30]
-	
+	df = original_df
+
+	# Get the current date
+	date = df.index[-1]
+
+	# Replace date slashed with dashed
+	date = date.replace('/', '-')
+
+	# Replace NaN with zeros
+	df = df.fillna(0)
+
+	# Change index to datetime
+	df.index = pd.to_datetime(df.index, infer_datetime_format=True) #format='%m/%-d/%y')
+
+	num = len(df)
+	if df.iloc[num-1, 0] >= 30:
+
+		# filter out row where cumulative cases is greater than 30
+		greater_30 = df['Cumulative cases']>30
+		df = df[greater_30]
+
 	# replace 0's in data frame with 1's to prevent errors
 	df = df.replace(to_replace=0, value=1)
+
+	# Get rid of any negative numbers with absolute value
+	df = df.apply(abs)
 
 	# find number of days between end of chart and start date
 	start = df.index[0]
@@ -134,7 +178,7 @@ def regression(df):
 	# Create X and Y prediction spaces
 	num = len(df)
 	X = np.arange(1, num+1).reshape(-1, 1)
-	Y = df['Daily cases'].values.reshape(-1, 1)
+	Y = df.iloc[:, 1].values.reshape(-1, 1)
 	
 	# Perform regression	
 	linear_regressor = LinearRegression()
@@ -179,8 +223,10 @@ def regression(df):
 	week1 = float(predictions.iloc[78])
 	week0 = float(predictions.iloc[71])
 	celeration = week1 / week0
+
+	original_df = pd.concat([df, predictions], axis=1)
 	
-	return predictions, celeration
+	return original_df, celeration, date
 
 
 def state_data(df, state):
@@ -195,30 +241,15 @@ def state_data(df, state):
 	return df
 
 
-def plot_data(df, area, state):
+def plot_data(df, area, state, celeration, date):
 	''' plots data'''
 
-	# get the current date
-	date = df.index[-1]
-	
-	# replace date slashes with dashes
-	date = date.replace('/', '-')
-
-	# replace NaN values with 0
-	df = df.fillna(0)
-
-	# change index to datetime
-	df.index = pd.to_datetime(df.index, infer_datetime_format=True) #format='%m/%-d/%y')
-	
-	Y_pred, celeration = regression(df)
-
-	# Add predictions to dataframe
-	df = pd.concat([df, Y_pred], axis=1)
-
 	# Build plot
-	fig = plt.figure()
+	fig  = plt.figure()
 	fig.set_size_inches(11, 8.5)
 
+	#ax = df.plot(kind='line', logy=True, legend=True, marker='.', linewidth=1)
+	
 	ax = df['Cumulative cases'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
 	ax = df['Daily cases'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
 	ax = df['Cumulative deaths'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
@@ -228,7 +259,7 @@ def plot_data(df, area, state):
 	# Add any necessary vertical lines
 	#plt.axvline(x=datetime.datetime(2020, 3, 17), color='yellow', linewidth=1)
 	#plt.axhline(y=1000, color='red', linewidth=1, linestyle='--')	
-
+	
 	# Set the range for the y axis
 	ax.set_ylim([1, 1000000])
 
@@ -249,14 +280,15 @@ def plot_data(df, area, state):
 
 	# set x labels
 	ax.set_xticklabels(np.arange(0, 141, 7))
-
+	
+	
 	# Create text box
-	fig.text(0.6, 0.03, 'Celeration = x{:.1f} per week (not counting data points before cumulative cases reached 30)'.format(celeration),\
+	fig.text(0.6, 0.03, 'Celeration = x{:.1f} per week (not counting data points before cumulative cases reached 30, if possible)'.format(celeration),\
 			horizontalalignment='left', \
 			verticalalignment='center', \
 			bbox=dict(facecolor='white', alpha=1.0), \
 			wrap=True)
-
+	
 	fig.text(0.025, 0.025, 'Source: Johns Hopkins', bbox=dict(facecolor='white', alpha=1.0))
 	fig.text(0.12, 0.96, '29-Dec-2019', rotation=45)
 
@@ -281,7 +313,7 @@ def plot_data(df, area, state):
 	
 	# save chart
 	if state == None:
-		plt.savefig(area + '.png')
+		plt.savefig(date+'-'+area+'.png')
 
 	else:
 		plt.savefig(state + '.png')
@@ -290,10 +322,10 @@ def plot_data(df, area, state):
 	os.chdir('../..')
 
 	# display the chart
-	plt.show()
+	#plt.show()
 	
 
-	return df
+	return 
 
 
 if __name__ == '__main__':
