@@ -17,7 +17,7 @@ def main():
 	#countries = ['US', 'Iran', 'Italy', 'Spain']
 	#countries = ['US', 'Russia']
 	state = None
-	
+		
 	# get a list of the countries
 	countries = load_data('Confirmed')
 	countries = countries['Country/Region']
@@ -30,8 +30,8 @@ def main():
 
 	for country in countries:
 
-		print('Now processing {}...'.format(country))
-
+		print('NOW PROCESSING {}...'.format(country))
+		print('')
 		# define data type  (Confirmed, Deaths, Recovered)
 		data_types = ['Confirmed', 'Deaths']
 
@@ -69,9 +69,21 @@ def main():
 
 		df.columns=(['Cumulative cases', 'Daily cases', 'Cumulative deaths', 'Daily deaths'])
 		
+		# Check if data frame is empty and skip to next country if true
+		#print(df)
+		check = df.empty
+		print(check)
+		print('')
+		if check == True:
+			continue
+
 		# Regression
-		df, celeration,date = regression(df)
+		df, celeration, date = regression(df)
 		
+		# Check again if df is empty
+		if  celeration == 'no_celeration':
+			continue
+
 		# Update celeration results
 		new_line = pd.Series([country, celeration])
 
@@ -163,12 +175,16 @@ def regression(original_df):
 		greater_30 = df['Cumulative cases']>30
 		df = df[greater_30]
 
+	# Check if df is now empty
+	if df.empty == True:
+		return 'no_df', 'no_celeration', 'no_date'
+
 	# replace 0's in data frame with 1's to prevent errors
 	df = df.replace(to_replace=0, value=1)
 
 	# Get rid of any negative numbers with absolute value
 	df = df.apply(abs)
-
+	print(df)
 	# find number of days between end of chart and start date
 	start = df.index[0]
 	end = datetime.datetime(2020, 5, 17)
@@ -323,7 +339,7 @@ def plot_data(df, area, state, celeration, date):
 
 	# display the chart
 	#plt.show()
-	
+	plt.close()	
 
 	return 
 
