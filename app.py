@@ -16,17 +16,25 @@ def main():
 	# select mode for charting -- 'solo' or 'comparison'
 	mode = 'solo'
 
-	# define region of interest -- 'state', 'country', or 'all countries'
-	region = 'country'
+	# define region of interest -- 'state', 'country', 'all countries', or 'all states'
+	region = 'all countries'
 
 	state = None
 
 	if region == 'all countries':		
 		# get a list of the all the countries
-		countries = load_data('Confirmed')
+		countries = load_data('confirmed')
 		countries = countries['Country/Region']
 		countries = countries.drop_duplicates()
 		countries = countries.tolist()
+
+	elif region == 'all states':
+		countries = state_list()
+		#countries = load_data('Confirmed')
+		#countries = get_data(countries, 'US', 'US')
+		#countries = countries['Province/State']
+		#countries = countries.drop_duplicates()
+		#countries = countries.tolist()
 
 	elif region == 'state':
 		countries = 'US'
@@ -38,7 +46,7 @@ def main():
 	results = pd.DataFrame()	
 
 	# Track celeration?
-	track_celeration = 'No'
+	track_celeration = 'Yes'
 
 	if track_celeration == 'Yes':
 		celerations = pd.DataFrame()
@@ -50,7 +58,7 @@ def main():
 		print('')
 
 		# define data type  (Confirmed, Deaths, Recovered)
-		data_types = ['Confirmed', 'Deaths']
+		data_types = ['confirmed', 'deaths']
 
 		# initialize blank DataFrame
 		df = pd.DataFrame()
@@ -61,7 +69,7 @@ def main():
 			confirmed = load_data(data)
 	
 			# Slice regional data only
-			region_df = get_data(confirmed, country)	
+			region_df = get_data(confirmed, country, region)	
 
 			if state != None:
 
@@ -116,15 +124,15 @@ def main():
 			results = pd.concat([results, df[country + ' Daily cases']], axis=1)
 
 		# Plot data
-		plot_data(df, country, state, celeration, date)
+		plot_data(df, country, state, celeration, date, region)
 	
 	if track_celeration == 'Yes':
-		os.chdir('./charts/celerations')
+		os.chdir('./celerations')
 		print(celerations)
 		celerations.to_csv(date+'-celerations.csv', index=False)
 
 	print('Good bye!')
-
+	
 	return
 
 
@@ -135,7 +143,8 @@ def load_data(data):
 	os.chdir('../COVID-19/csse_covid_19_data/csse_covid_19_time_series')
 
 	# create appropriate file name
-	filename = 'time_series_19-covid-' + data + '.csv'
+	filename = 'time_series_covid19_' + data + '_global.csv'
+	#filename = 'time_series_19-covid-' + data + '.csv'
 
 	# read the csv into a dataframe
 	df = pd.read_csv(filename)
@@ -146,10 +155,15 @@ def load_data(data):
 	return df
 
 
-def get_data(df, place):
+def get_data(df, place, region):
 	''' returns df with selected regional cases only'''
 
-	is_place = df['Country/Region'] == place	
+	if region == 'all states':
+		is_place = df['Province/State'] == place
+
+	else:
+		is_place = df['Country/Region'] == place	
+
 	df = df[is_place]
 	df.reset_index(drop=True, inplace=True)
 
@@ -280,7 +294,7 @@ def state_data(df, state):
 	return df
 
 
-def plot_data(df, area, state, celeration, date):
+def plot_data(df, area, state, celeration, date, mode):
 	''' plots data'''
 
 	# Build plot
@@ -345,10 +359,17 @@ def plot_data(df, area, state, celeration, date):
 	# change to appropriate directory to save chart
 	os.chdir('./charts')
 
-	if not os.path.exists('./' + date):
-		os.mkdir(date)
+	if 'state' in mode:
+		folder = 'states'
+
+	else:
+		folder = 'countries'
+
+	if not os.path.exists('./' + date + '/' + folder):
+		os.mkdir(date + '/' + folder)
 	
-	os.chdir('./' + date)
+
+	os.chdir('./' + date + '/' + folder)
 	
 	# save chart
 	if state == None:
@@ -358,13 +379,70 @@ def plot_data(df, area, state, celeration, date):
 		plt.savefig(date+'-'+state + '.png')
 	
 	# change back to original working directory
-	os.chdir('../..')
+	os.chdir('../../..')
 
 	# display the chart
 	#plt.show()
 	plt.close()	
 
 	return 
+
+
+def state_list():
+	''' makes list of states'''
+
+	state_list = [  'Washington', \
+					'New York', \
+					'California', \
+					'Massachusetts', \
+					'Georgia', \
+					'Colorado', \
+					'Florida', \
+					'New Jersey', \
+					'Oregon', \
+					'Texas', \
+					'Illinois', \
+					'Pennsylvania', \
+					'Iowa', \
+					'Maryland', \
+					'North Carolina', \
+					'South Carolina', \
+					'Tennessee', \
+					'Virginia', \
+					'Arizona', \
+					'Indiana', \
+					'Kentucky', \
+					'District of Columbia', \
+					'Nevada', \
+					'New Hampshire', \
+					'Minnesota', \
+					'Nebraska', \
+					'Ohio', \
+					'Rhode Island', \
+					'Wisconsin', \
+					'Connecticut', \
+					'Hawaii', \
+					'Oklahoma', \
+					'Utah', \
+					'Kansas', \
+					'Louisiana', \
+					'Missouri', \
+					'Vermont', \
+					'Alaska', \
+					'Arkansas', \
+					'Delaware', \
+					'Idaho', \
+					'Maine', \
+					'Michigan', \
+					'Mississippi', \
+					'Montana', \
+					'New Mexico', \
+					'North Dakota', \
+					'South Dakota', \
+					'West Virginia', \
+					'Wyoming']
+					
+	return state_list
 
 
 if __name__ == '__main__':
