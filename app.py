@@ -13,11 +13,11 @@ import math
 def main():
 	''' main function'''
 
-	# select mode -- 'solo' or 'comparison'
+	# select mode for charting -- 'solo' or 'comparison'
 	mode = 'solo'
 
 	# define region of interest -- 'state', 'country', or 'all countries'
-	region = 'all countries'
+	region = 'country'
 
 	state = None
 
@@ -33,12 +33,12 @@ def main():
 		state = 'South Carolina'
 
 	elif region == 'country':
-		countries = ['Iran']
+		countries = ['US', 'Spain', 'Italy', 'Iran']
 	
 	results = pd.DataFrame()	
 
 	# Track celeration?
-	track_celeration = 'Yes'
+	track_celeration = 'No'
 
 	if track_celeration == 'Yes':
 		celerations = pd.DataFrame()
@@ -117,11 +117,9 @@ def main():
 
 		# Plot data
 		plot_data(df, country, state, celeration, date)
-		
-
-	os.chdir('./charts/' + date)
-
+	
 	if track_celeration == 'Yes':
+		os.chdir('./charts/celerations')
 		print(celerations)
 		celerations.to_csv(date+'-celerations.csv', index=False)
 
