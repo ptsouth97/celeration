@@ -8,6 +8,9 @@ import datetime
 import os
 from sklearn.linear_model import LinearRegression
 import math
+import get_states
+import fit_curve
+import charting
 
 
 def main():
@@ -17,9 +20,11 @@ def main():
 	mode = 'solo'
 
 	# define region of interest -- 'state', 'country', 'all countries', or 'all states'
-	region = 'all countries'
+	region = 'country'
 
 	state = None
+
+	stop_date = None
 
 	if region == 'all countries':		
 		# get a list of the all the countries
@@ -29,7 +34,7 @@ def main():
 		countries = countries.tolist()
 
 	elif region == 'all states':
-		countries = state_list()
+		countries = get_states.state_list()
 		#countries = load_data('Confirmed')
 		#countries = get_data(countries, 'US', 'US')
 		#countries = countries['Province/State']
@@ -41,7 +46,7 @@ def main():
 		state = 'South Carolina'
 
 	elif region == 'country':
-		countries = ['US', 'Spain', 'Italy', 'Iran']
+		countries = ['US']
 	
 	results = pd.DataFrame()	
 
@@ -50,7 +55,6 @@ def main():
 
 	if track_celeration == 'Yes':
 		celerations = pd.DataFrame()
-
 
 	for country in countries:
 
@@ -67,10 +71,10 @@ def main():
 
 			# Load data
 			confirmed = load_data(data)
-	
+				
 			# Slice regional data only
 			region_df = get_data(confirmed, country, region)	
-
+			print("four")
 			if state != None:
 
 				# Get state data
@@ -104,7 +108,7 @@ def main():
 			continue
 
 		# Regression
-		df, celeration, date = regression(df)
+		df, celeration, date = fit_curve.regression(df, stop_date)
 		
 		# Check again if df is empty
 		if  celeration == 'no_celeration':
@@ -124,7 +128,7 @@ def main():
 			results = pd.concat([results, df[country + ' Daily cases']], axis=1)
 
 		# Plot data
-		plot_data(df, country, state, celeration, date, region)
+		charting.plot_data(df, country, state, celeration, date, region)
 	
 	if track_celeration == 'Yes':
 		os.chdir('./celerations')
@@ -188,100 +192,6 @@ def calc_daily_count(df):
 	return df
 
 
-def regression(original_df):
-	''' performs curve fit'''
-
-	df = original_df
-
-	# Get the current date
-	date = df.index[-1]
-
-	# Replace date slashed with dashed
-	date = date.replace('/', '-')
-
-	# Replace NaN with zeros
-	df = df.fillna(0)
-
-	# Change index to datetime
-	df.index = pd.to_datetime(df.index, infer_datetime_format=True) #format='%m/%-d/%y')
-
-	num = len(df)
-	if df.iloc[num-1, 0] >= 30:
-
-		# filter out row where cumulative cases is greater than 30
-		greater_30 = df['Cumulative cases']>30
-		df = df[greater_30]
-
-	# Check if df is now empty
-	if df.empty == True:
-		return 'no_df', 'no_celeration', 'no_date'
-
-	# replace 0's in data frame with 1's to prevent errors
-	df = df.replace(to_replace=0, value=1)
-
-	# Get rid of any negative numbers with absolute value
-	df = df.apply(abs)
-	print(df)
-	# find number of days between end of chart and start date
-	start = df.index[0]
-	end = datetime.datetime(2020, 5, 17)
-	days = (end - start).days
-	shift = 140 - days
-
-	# Create X and Y prediction spaces
-	num = len(df)
-	X = np.arange(1, num+1).reshape(-1, 1)
-	Y = df.iloc[:, 1].values.reshape(-1, 1)
-	
-	# Perform regression	
-	linear_regressor = LinearRegression()
-	linear_regressor.fit(X, np.log(Y))
-
-	# Get linear regression parameters
-	m = linear_regressor.coef_
-	b = linear_regressor.intercept_
-
-	# Initialize and fill data frame for regression results
-	values = []
-	
-	for value in range(1, 140): #days+1):   # changed 'begin' from '1'
-		values.append(math.exp(m*(value-shift) + b))
-
-	# Create a date frame the size of the celeration chart and fill it with the calculated values
-	predictions = pd.DataFrame(index=[np.arange(1, 140)], data=values)
-
-	# Create a data frame to join with the predictions that matches the size of the celeration chart
-	total_days = 140
-	early_days = 140 - days
-	early_predictions = pd.DataFrame(np.zeros((early_days, 1)))
-
-	predictions = predictions.append(early_predictions)
-	predictions.reset_index(inplace=True)
-	predictions.drop(['index'], axis=1, inplace=True)
-
-
-	# Convert index back to dates
-	dates = predictions.index.values
-	dates = dates.tolist()
-	
-	dates = [ datetime.datetime(2019, 12, 29) + datetime.timedelta(days=date) for date in dates ]
-
-	predictions['dates'] = dates
-	predictions.set_index('dates', inplace=True)
-	predictions = predictions.rename(columns={0: 'celeration curve'})
-	predictions.replace(to_replace=0, value=np.nan, inplace=True)
-	
-
-	# Calculate the celeration value
-	week1 = float(predictions.iloc[78])
-	week0 = float(predictions.iloc[71])
-	celeration = week1 / week0
-
-	original_df = pd.concat([df, predictions], axis=1)
-	
-	return original_df, celeration, date
-
-
 def state_data(df, state):
 	''' plots data'''
 
@@ -302,7 +212,7 @@ def plot_data(df, area, state, celeration, date, mode):
 	fig.set_size_inches(11, 8.5)
 
 	#ax = df.plot(kind='line', logy=True, legend=True, marker='.', linewidth=1)
-	
+
 	ax = df['Cumulative cases'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
 	ax = df['Daily cases'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
 	ax = df['Cumulative deaths'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
@@ -366,11 +276,11 @@ def plot_data(df, area, state, celeration, date, mode):
 		folder = 'countries'
 
 	if not os.path.exists('./' + date + '/' + folder):
-		os.mkdir(date + '/' + folder)
+		os.makedirs('./'+date+'/'+folder)
 	
 
-	os.chdir('./' + date + '/' + folder)
-	
+	os.chdir('./'+date+'/'+folder)
+		
 	# save chart
 	if state == None:
 		plt.savefig(date+'-'+area+'.png')
@@ -386,63 +296,6 @@ def plot_data(df, area, state, celeration, date, mode):
 	plt.close()	
 
 	return 
-
-
-def state_list():
-	''' makes list of states'''
-
-	state_list = [  'Washington', \
-					'New York', \
-					'California', \
-					'Massachusetts', \
-					'Georgia', \
-					'Colorado', \
-					'Florida', \
-					'New Jersey', \
-					'Oregon', \
-					'Texas', \
-					'Illinois', \
-					'Pennsylvania', \
-					'Iowa', \
-					'Maryland', \
-					'North Carolina', \
-					'South Carolina', \
-					'Tennessee', \
-					'Virginia', \
-					'Arizona', \
-					'Indiana', \
-					'Kentucky', \
-					'District of Columbia', \
-					'Nevada', \
-					'New Hampshire', \
-					'Minnesota', \
-					'Nebraska', \
-					'Ohio', \
-					'Rhode Island', \
-					'Wisconsin', \
-					'Connecticut', \
-					'Hawaii', \
-					'Oklahoma', \
-					'Utah', \
-					'Kansas', \
-					'Louisiana', \
-					'Missouri', \
-					'Vermont', \
-					'Alaska', \
-					'Arkansas', \
-					'Delaware', \
-					'Idaho', \
-					'Maine', \
-					'Michigan', \
-					'Mississippi', \
-					'Montana', \
-					'New Mexico', \
-					'North Dakota', \
-					'South Dakota', \
-					'West Virginia', \
-					'Wyoming']
-					
-	return state_list
 
 
 if __name__ == '__main__':
