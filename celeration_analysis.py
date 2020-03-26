@@ -9,7 +9,9 @@ def main():
 
 	path = './celerations'
 	filelist = os.listdir(path)
+	print(filelist)
 	filelist = filelist[-2:]
+	date = filelist[-1]
 
 	os.chdir(path)
 
@@ -25,7 +27,7 @@ def main():
 	results['delta'] = results['1_y'] - results['1_x']
 
 	print(results)
-	results.to_csv('results.csv')
+	results.to_csv(date+'-results.csv')
 	#print(df.index)
 
 

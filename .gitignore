@@ -2,3 +2,5 @@
 /old_charts
 /celerations
 /__pycache__
+/old_celerations
+.gitignore

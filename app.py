@@ -20,7 +20,7 @@ def main():
 	mode = 'solo'
 
 	# define region of interest -- 'state', 'country', 'all countries', or 'all states'
-	region = 'country'
+	region = 'all countries'
 
 	state = None
 
