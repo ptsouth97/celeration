@@ -3,4 +3,5 @@
 /celerations
 /__pycache__
 /old_celerations
+*.csv
 .gitignore

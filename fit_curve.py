@@ -5,15 +5,37 @@ import numpy as np
 import datetime
 from sklearn.linear_model import LinearRegression
 import math
+import matplotlib.pyplot as plt
 
 
 def main():
 	''' main function'''
 
+	# Load test data
+	df = pd.read_csv('China_regression_test_data.csv', index_col=0)
+
+	stop_date = None
+
 	# Regression
 	df, celeration, date = regression(df, stop_date)
 
 	return
+
+
+def moving_average(x, y):
+	''' creates a moving average'''
+
+	df = pd.DataFrame(data=y, index=x)
+	
+	rolling = df[0].rolling(window=6)
+	rolling_median = rolling.median()
+
+	plt.plot(x, y, marker='.')
+	plt.yscale('log')
+	rolling_median.plot(color='red')
+	#plt.show()
+
+	return	
 
 
 def regression(original_df, stop_date):
@@ -28,6 +50,7 @@ def regression(original_df, stop_date):
 	else:
 		date = stop_date
 
+	print(date)
 	# Replace date slashed with dashed
 	date = date.replace('/', '-')
 
@@ -71,6 +94,9 @@ def regression(original_df, stop_date):
 	num = len(df)
 	X = np.arange(1, num+1).reshape(-1, 1)
 	Y = df.iloc[0:num, 1].values.reshape(-1, 1)
+
+	# Get the moving averages
+	moving_average(X, Y)
 
 	# Perform regression	
 	linear_regressor = LinearRegression()

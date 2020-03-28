@@ -46,7 +46,7 @@ def main():
 		state = 'South Carolina'
 
 	elif region == 'country':
-		countries = ['US']
+		countries = ['Korea, South']
 	
 	results = pd.DataFrame()	
 
@@ -106,6 +106,8 @@ def main():
 
 		if check == True:
 			continue
+
+		df.to_csv('China_regression_test_data.csv')
 
 		# Regression
 		df, celeration, date = fit_curve.regression(df, stop_date)
