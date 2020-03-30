@@ -58,13 +58,16 @@ def plot_data(df, area, state, celeration, date, mode):
 	
 	
 	# Create text box
-	fig.text(0.6, 0.03, 'Celeration = x{:.1f} per week (not counting data points before cumulative cases reached 30, if possible)'.format(celeration),\
+	fig.text(0.6, 0.028, 'Celeration = x{:.1f} per week (not counting data points before cumulative cases reached 30, if possible)'.format(celeration),\
 			horizontalalignment='left', \
 			verticalalignment='center', \
 			bbox=dict(facecolor='white', alpha=1.0), \
 			wrap=True)
 	
-	fig.text(0.025, 0.025, 'Source: Johns Hopkins, https://github.com/CSSEGISandData', bbox=dict(facecolor='white', alpha=1.0))
+	fig.text(0.025, 0.013, 'Source: Johns Hopkins, https://github.com/CSSEGISandData' + '\n' \
+			+ 'Charter: Blake Crosby, https://github.com/ptsouth97/celeration', bbox=dict(facecolor='white', alpha=1.0))
+
+	#fig.text(0.025, 0.015, 'Charter: Blake Crosby, https://github.com/ptsouth97/celeration')
 	fig.text(0.12, 0.96, '29-Dec-2019', rotation=45)
 
 	# label chart
@@ -75,7 +78,7 @@ def plot_data(df, area, state, celeration, date, mode):
 	else:
 		plt.title('2019 nCoV in {} as of {}'.format(state, date))
 
-	plt.xlabel('Days')
+	plt.xlabel('Successive Calendar Days')
 	plt.ylabel('Counts of Cases and Deaths')
 	
 	# change to appropriate directory to save chart

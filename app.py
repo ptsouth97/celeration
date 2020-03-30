@@ -20,7 +20,7 @@ def main():
 	mode = 'solo'
 
 	# define region of interest -- 'state', 'country', 'all countries', or 'all states'
-	region = 'all countries'
+	region = 'country'
 
 	state = None
 
@@ -46,7 +46,7 @@ def main():
 		state = 'South Carolina'
 
 	elif region == 'country':
-		countries = ['Korea, South']
+		countries = ['US']
 	
 	results = pd.DataFrame()	
 
