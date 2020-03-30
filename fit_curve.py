@@ -50,7 +50,6 @@ def regression(original_df, stop_date):
 	else:
 		date = stop_date
 
-	print(date)
 	# Replace date slashed with dashed
 	date = date.replace('/', '-')
 

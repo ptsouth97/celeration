@@ -17,10 +17,30 @@ def main():
 	''' main function'''
 
 	# select mode for charting -- 'solo' or 'comparison'
-	mode = 'solo'
+	while True:
+
+		mode = input("Chart mode: 'solo' or 'comparision' ").strip()
+		mode_list = ['solo', 'comparison']
+
+		if mode in mode_list:
+			break
+
+		else:
+			print('Sorry, that is not a valid option. Please try again.')
+			print('')
+
 
 	# define region of interest -- 'state', 'country', 'all countries', or 'all states'
-	region = 'country'
+	while True:
+	
+		region = input("What regions? 'state', 'country', 'all countries', or 'all states' ").lstrip().rstrip()
+		region_list = ['state', 'country', 'all countries', 'all states']
+
+		if region in region_list:
+			break
+		else:
+			print('Sorry, that is not a valid option. Please try again.')
+			print('')
 
 	state = None
 
@@ -35,18 +55,13 @@ def main():
 
 	elif region == 'all states':
 		countries = get_states.state_list()
-		#countries = load_data('Confirmed')
-		#countries = get_data(countries, 'US', 'US')
-		#countries = countries['Province/State']
-		#countries = countries.drop_duplicates()
-		#countries = countries.tolist()
 
 	elif region == 'state':
 		countries = 'US'
 		state = 'South Carolina'
 
 	elif region == 'country':
-		countries = ['US']
+		countries = ['Iran']
 	
 	results = pd.DataFrame()	
 
@@ -68,13 +83,13 @@ def main():
 		df = pd.DataFrame()
 
 		for data in data_types:
-
+			
 			# Load data
 			confirmed = load_data(data)
-				
+			
 			# Slice regional data only
 			region_df = get_data(confirmed, country, region)	
-			print("four")
+			
 			if state != None:
 
 				# Get state data
@@ -82,8 +97,8 @@ def main():
 
 			else:
 				# Drop unnecessary columns
-				region_df.drop(['Province/State', 'Country/Region', 'Lat', 'Long'], axis=1, inplace=True)
-			
+				region_df = region_df.drop(['Province/State', 'Country/Region', 'Lat', 'Long'], axis=1)
+						
 			# Sum cumulative values for each day
 			cumulative = count_data(region_df)
 
@@ -101,8 +116,6 @@ def main():
 		# Check if data frame is empty and skip to next country if true
 		
 		check = df.empty
-		print(check)
-		print('')
 
 		if check == True:
 			continue
@@ -150,7 +163,6 @@ def load_data(data):
 
 	# create appropriate file name
 	filename = 'time_series_covid19_' + data + '_global.csv'
-	#filename = 'time_series_19-covid-' + data + '.csv'
 
 	# read the csv into a dataframe
 	df = pd.read_csv(filename)
@@ -204,100 +216,6 @@ def state_data(df, state):
 	df.drop(['Country/Region', 'Province/State', 'Lat', 'Long'], axis=1, inplace=True)
 
 	return df
-
-
-def plot_data(df, area, state, celeration, date, mode):
-	''' plots data'''
-
-	# Build plot
-	fig  = plt.figure()
-	fig.set_size_inches(11, 8.5)
-
-	#ax = df.plot(kind='line', logy=True, legend=True, marker='.', linewidth=1)
-
-	ax = df['Cumulative cases'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
-	ax = df['Daily cases'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
-	ax = df['Cumulative deaths'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
-	ax = df['Daily deaths'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
-	ax = df['celeration curve'].plot(kind='line', marker=None, linewidth=1, logy=True, legend=True) #, color='k')	
-
-	# Add any necessary vertical lines
-	#plt.axvline(x=datetime.datetime(2020, 3, 17), color='yellow', linewidth=1)
-	#plt.axhline(y=1000, color='red', linewidth=1, linestyle='--')	
-	
-	# Set the range for the y axis
-	ax.set_ylim([1, 1000000])
-
-	# turn on major and minor grid lines for y axis 
-	ax.yaxis.grid(True, which='minor', linestyle='-', alpha=0.5)
-	ax.yaxis.grid(True, which='major', linestyle='-', alpha=0.8)
-	
-	# set the range for the x axis
-	ax.set_xlim([datetime.date(2019, 12,29), datetime.date(2020, 5, 17)])
-
-	# set the location for the x axis ticks
-	ax.xaxis.set_minor_locator(MultipleLocator(1))
-	ax.xaxis.set_major_locator(MultipleLocator(7))
-
-	# turn on the major and minor grid lines for x axis
-	ax.xaxis.grid(True, which='minor', linestyle='-', alpha=0.5)
-	ax.xaxis.grid(True, which='major', linestyle='-', alpha=0.8)
-
-	# set x labels
-	ax.set_xticklabels(np.arange(0, 141, 7))
-	
-	
-	# Create text box
-	fig.text(0.6, 0.03, 'Celeration = x{:.1f} per week (not counting data points before cumulative cases reached 30, if possible)'.format(celeration),\
-			horizontalalignment='left', \
-			verticalalignment='center', \
-			bbox=dict(facecolor='white', alpha=1.0), \
-			wrap=True)
-	
-	fig.text(0.025, 0.025, 'Source: Johns Hopkins, https://github.com/CSSEGISandData', bbox=dict(facecolor='white', alpha=1.0))
-	fig.text(0.12, 0.96, '29-Dec-2019', rotation=45)
-
-	# label chart
-
-	if state == None:
-		plt.title('2019 nCoV in {} as of {}'.format(area, date))
-
-	else:
-		plt.title('2019 nCoV in {} as of {}'.format(state, date))
-
-	plt.xlabel('Days')
-	plt.ylabel('Counts of Cases and Deaths')
-	
-	# change to appropriate directory to save chart
-	os.chdir('./charts')
-
-	if 'state' in mode:
-		folder = 'states'
-
-	else:
-		folder = 'countries'
-
-	if not os.path.exists('./' + date + '/' + folder):
-		os.makedirs('./'+date+'/'+folder)
-	
-
-	os.chdir('./'+date+'/'+folder)
-		
-	# save chart
-	if state == None:
-		plt.savefig(date+'-'+area+'.png')
-
-	else:
-		plt.savefig(date+'-'+state + '.png')
-	
-	# change back to original working directory
-	os.chdir('../../..')
-
-	# display the chart
-	#plt.show()
-	plt.close()	
-
-	return 
 
 
 if __name__ == '__main__':
