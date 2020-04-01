@@ -47,6 +47,7 @@ def main():
 	stop_date = None
 
 	if region == 'all countries':		
+
 		# get a list of the all the countries
 		countries = load_data('confirmed')
 		countries = countries['Country/Region']
@@ -61,7 +62,7 @@ def main():
 		state = 'South Carolina'
 
 	elif region == 'country':
-		countries = ['Iran']
+		countries = input('Enter the countries to analyze separated by a comma: ').split(',')
 	
 	results = pd.DataFrame()	
 
