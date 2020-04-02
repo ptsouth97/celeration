@@ -30,6 +30,7 @@ def plot_data(df, area, state, celeration, date, mode):
 	ax = df['Cumulative deaths'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
 	ax = df['Daily deaths'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
 	ax = df['celeration curve'].plot(kind='line', marker=None, linewidth=1, logy=True, legend=True) #, color='k')	
+	
 
 	# Add any necessary vertical lines
 	#plt.axvline(x=datetime.datetime(2020, 3, 17), color='yellow', linewidth=1)

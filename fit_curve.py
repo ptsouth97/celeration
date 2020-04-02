@@ -35,7 +35,8 @@ def moving_average(x, y):
 	rolling_median.plot(color='red')
 	#plt.show()
 
-	return	
+	
+	return
 
 
 def regression(original_df, stop_date):
@@ -60,6 +61,7 @@ def regression(original_df, stop_date):
 	df.index = pd.to_datetime(df.index, infer_datetime_format=True) #format='%m/%-d/%y')
 
 	num = len(df)
+
 	if df.iloc[num-1, 0] >= 30:
 
 		# filter out row where cumulative cases is greater than 30
@@ -95,7 +97,7 @@ def regression(original_df, stop_date):
 	Y = df.iloc[0:num, 1].values.reshape(-1, 1)
 
 	# Get the moving averages
-	moving_average(X, Y)
+	ma = moving_average(X, Y)
 
 	# Perform regression	
 	linear_regressor = LinearRegression()
