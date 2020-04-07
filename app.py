@@ -42,6 +42,9 @@ def main():
 			print('Sorry, that is not a valid option. Please try again.')
 			print('')
 
+	# Define multiple trends within one chart?
+	multi_trend = input("Do you want to define multiple trends for single charts? (True/False) ").lstrip().rstrip()
+
 	state = None
 
 	stop_date = None
@@ -121,10 +124,13 @@ def main():
 		if check == True:
 			continue
 
-		df.to_csv('China_regression_test_data.csv')
+		#df.to_csv('China_regression_test_data.csv')
+
+		# Prep data for regression
+		df, date = fit_curve.prep_data(df, stop_date)
 
 		# Regression
-		df, celeration, date = fit_curve.regression(df, stop_date)
+		df, celeration = fit_curve.regression(df, date, multi_trend)
 		
 		# Check again if df is empty
 		if  celeration == 'no_celeration':
@@ -144,7 +150,7 @@ def main():
 			results = pd.concat([results, df[country + ' Daily cases']], axis=1)
 
 		# Plot data
-		charting.plot_data(df, country, state, celeration, date, region)
+		charting.plot_data(df, country, state, celeration, date, region, multi_trend)
 	
 	if track_celeration == 'Yes':
 		os.chdir('./celerations')

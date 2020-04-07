@@ -16,7 +16,7 @@ def main():
 	return
 
 
-def plot_data(df, area, state, celeration, date, mode):
+def plot_data(df, area, state, celeration, date, mode, multi):
 	''' plots data'''
 
 	# Build plot
@@ -108,7 +108,9 @@ def plot_data(df, area, state, celeration, date, mode):
 	os.chdir('../../..')
 
 	# display the chart
-	#plt.show()
+	if multi == True:
+		plt.show()
+
 	plt.close()	
 
 	return 
