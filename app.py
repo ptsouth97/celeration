@@ -43,7 +43,8 @@ def main():
 			print('')
 
 	# Define multiple trends within one chart?
-	multi_trend = input("Do you want to define multiple trends for single charts? (True/False) ").lstrip().rstrip()
+	multi_trend = int(input("Do you want to define multiple trends for single charts? (1=True; 0=False) ").lstrip().rstrip())
+	multi_trend = bool(multi_trend)
 
 	state = None
 
