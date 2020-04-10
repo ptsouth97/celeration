@@ -108,15 +108,23 @@ def regression(df, date, multi_trend):
 			# find number of days between end of chart and start date
 			if multi_trend == False:
 				start = df.index[0]
+				end = datetime.datetime(2020, 5, 17)
 
 			else:
-				year = int(input('What is the start date year? '))
-				mon = int(input('What is the start date month? '))
-				day = int(input('What is the start date day? '))
+				start_year = int(input('What is the start date year? '))
+				start_mon = int(input('What is the start date month? '))
+				start_day = int(input('What is the start date day? '))
+				start = datetime.datetime(start_year, start_mon, start_day)
 
-				start = datetime.datetime(year, mon, day)
-	
-			end = datetime.datetime(2020, 5, 17)
+				end_year = int(input('What is the end date year? '))
+				end_mon = int(input('What is the end date month? '))
+				end_day = int(input('What is the end date day? '))
+				end = datetime.datetime(end_year, end_mon, end_day)
+
+			df = df.loc[start:end]
+			
+			print(df)
+
 			days = (end - start).days
 			shift = 140 - days
 
@@ -139,11 +147,11 @@ def regression(df, date, multi_trend):
 			# Initialize and fill data frame for regression results
 			values = []
 	
-			for value in range(1, 140): #days+1):   # changed 'begin' from '1'
+			for value in range(1, days): #140): #days+1):   # changed 'begin' from '1'
 				values.append(math.exp(m*(value-shift) + b))
 
-			# Create a date frame the size of the celeration chart and fill it with the calculated values
-			predictions = pd.DataFrame(index=[np.arange(1, 140)], data=values)
+			# Create a data frame the size of the celeration chart and fill it with the calculated values
+			predictions = pd.DataFrame(index=[np.arange(1, days)], data=values)
 
 			# Create a data frame to join with the predictions that matches the size of the celeration chart
 			total_days = 140
