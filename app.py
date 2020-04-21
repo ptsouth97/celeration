@@ -42,9 +42,19 @@ def main():
 			print('Sorry, that is not a valid option. Please try again.')
 			print('')
 
+
+	# Regression?
+	'''
+	reg = input("Do you want to include regression? (Yes/No) ")
+	
+	if reg == 'No':
+		celeration = 'n/a'
+	'''
+
 	# Define multiple trends within one chart?
 	multi_trend = int(input("Do you want to define multiple trends for single charts? (1=True; 0=False) ").lstrip().rstrip())
 	multi_trend = bool(multi_trend)
+
 
 	state = None
 
@@ -71,7 +81,7 @@ def main():
 	results = pd.DataFrame()	
 
 	# Track celeration?
-	track_celeration = 'Yes'
+	track_celeration = 'No'
 
 	if track_celeration == 'Yes':
 		celerations = pd.DataFrame()
@@ -123,9 +133,13 @@ def main():
 		check = df.empty
 
 		if check == True:
+			print(check)
 			continue
 
 		#df.to_csv('China_regression_test_data.csv')
+
+		# Regression?
+		#if reg == 'Yes':
 
 		# Prep data for regression
 		df, date = fit_curve.prep_data(df, stop_date)

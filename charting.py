@@ -29,7 +29,7 @@ def plot_data(df, area, state, celeration, date, mode, multi):
 	ax = df['Daily cases'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
 	ax = df['Cumulative deaths'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
 	ax = df['Daily deaths'].plot(kind='line', marker='.', linewidth=1, logy=True, legend=True)
-	ax = df['celeration curve'].plot(kind='line', marker=None, linewidth=1, logy=True, legend=True) #, color='k')	
+	#ax = df['celeration curve'].plot(kind='line', marker=None, linewidth=1, logy=True, legend=True) #, color='k')	
 	
 
 	# Add any necessary vertical lines
@@ -59,11 +59,11 @@ def plot_data(df, area, state, celeration, date, mode, multi):
 	
 	
 	# Create text box
-	fig.text(0.6, 0.028, 'Celeration = x{:.1f} per week (not counting data points before cumulative cases reached 30, if possible)'.format(celeration),\
+	'''fig.text(0.6, 0.028, 'Celeration = x{:.1f} per week (not counting data points before cumulative cases reached 30, if possible)'.format(celeration),\
 			horizontalalignment='left', \
 			verticalalignment='center', \
 			bbox=dict(facecolor='white', alpha=1.0), \
-			wrap=True)
+			wrap=True)'''
 	
 	fig.text(0.025, 0.013, 'Source: Johns Hopkins, https://github.com/CSSEGISandData' + '\n' \
 			+ 'Charter: Blake Crosby, https://github.com/ptsouth97/celeration', bbox=dict(facecolor='white', alpha=1.0))
